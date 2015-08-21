@@ -1,0 +1,10 @@
+Provide input in the following syntax
+
+lambda
+alpha
+num
+
+
+
+
+where, num : 1-Poisson, 2-Pareto

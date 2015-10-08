@@ -11,6 +11,7 @@
 #include <sys/un.h>
 
 #define SOCK_PATH "echo_socket"
+#define WINDOW_SIZE 5
 
 int random_gen()
 {
@@ -23,13 +24,11 @@ int random_gen()
     return 0;
 }
 
-
 int main(void)
 {
 	int s, s2, t, len, pkt_no, i;
 	struct sockaddr_un local, remote;
-	char str_ack[100] = "Yes";
-  char str_nack[100] = "No";
+	char str_ack[100];
 	char rcv_str[100];
 	int msg_pkt;
 
@@ -38,7 +37,7 @@ int main(void)
 		perror("socket");
 		exit(1);
 	}
-  printf("Stop-Wait Flow Program");
+  printf("Go Back-N Protocol");
 	local.sun_family = AF_UNIX;
 	strcpy(local.sun_path, SOCK_PATH);
 	unlink(local.sun_path);
@@ -69,27 +68,32 @@ int main(void)
 
 		done = 0;
 		pkt_no = 0;
-
 		do {
 			n = recv(s2, rcv_str, 100, 0);
 			
 			msg_pkt = atoi(rcv_str);
-			printf("Message received: %d\n", msg_pkt);
+      
+      printf("msg_pkt: %d\n", msg_pkt);
 			if(msg_pkt == pkt_no && n>=0)
 			{
           status = random_gen();
-			    if(status == 1)
+			    if(status == 1 || msg_pkt==0)
           {
+            snprintf(str_ack, 100, "%d", msg_pkt);
             if(send(s2, str_ack, n, 0)<0)
 			      {
 			          perror("send");
 			          done = 1;
 			      }
             pkt_no++;
+            
           }
           else
           {
-            if(send(s2, str_nack, n, 0)<0)
+            msg_pkt;
+            printf("Failing msg_pkt[%d]:\n", msg_pkt);
+            snprintf(str_ack, 100, "%d", msg_pkt);
+            if(send(s2, str_ack, n, 0)<0)
 			      {
 			          perror("send");
 			          done = 1;
@@ -109,6 +113,3 @@ int main(void)
 
 	return 0;
 }
-
-
-

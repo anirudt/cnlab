@@ -12,13 +12,16 @@
 #include <time.h>
 
 #define SOCK_PATH "echo_socket"
+#define WINDOW_SIZE 5
 
 int main(void)
 {
     int i, s, t, len;
+    int window_complete = 0;
     struct sockaddr_un remote;
     int msg_pkt[100];
     char msg_send[100];
+    int received_ack = 0;
     char str[100];
     int failures = 0, success = 0;
     int flag = 0;
@@ -49,29 +52,29 @@ int main(void)
     while(i<100) {
             snprintf(msg_send, 100, "%d", msg_pkt[i]);
             printf("msg_send = %s", msg_send);
-            
+             
             if (send(s, msg_send,bk, 0) == -1) {
              perror("send");
              exit(1);
             }
-        sleep(1);
-        /* Receiving the ACK signal */ 
-        if ((t=recv(s, str, 100, 0)) > 0) {
-          if(str[0] == 'Y')
-          {
-            success++;
-            printf("echo> msg_pkt[%d] ACK received:\n", i);
+            window_complete++;
+            printf("window_complete=%d\n", window_complete);
             i++;
-          }
-          if(str[0] == 'N')
-          {
-            failures++;
-            printf("echo> msg_pkt[%d] NACK received:\n", i);
-          }
-        } else {
-            if (t < 0) perror("recv");
-            else printf("Server closed connection\n");
-            exit(1);
+            sleep(1);
+        /* Receiving the ACK signal can be initiated 
+         * only when we have completed sending our
+         * entire window of packets */ 
+        if(window_complete%WINDOW_SIZE==0)
+        {
+          t = recv(s, str, 100, 0);
+          received_ack = atoi(str);
+          printf("received_ack=%d\n", received_ack);
+          if (t > 0) {
+              failures++;
+              i = received_ack + 1;
+              printf("echo> msg_pkt[%d] ACK received:\n", received_ack);
+              window_complete = 0;
+          } 
         }
         memset(msg_send, 100, 0);
         memset(str, 100, 0);

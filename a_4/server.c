@@ -13,20 +13,17 @@
 #define SOCK_PATH "echo_socket"
 #define WINDOW_SIZE 5
 
-int random_gen()
+int random_gen(int i)
 {
-  double n;
 	srand(time(NULL));
-	n = (random()%RAND_MAX+1)/(1.0*RAND_MAX);
-  if(n<=0.7)
-    return 1;
-  else 
-    return 0;
+  int n;
+	n = (i+random()%5);
+  return n;
 }
 
 int main(void)
 {
-	int s, s2, t, len, pkt_no, i;
+	int s, s2, t, len, pkt_no, i, last_correct, window_flag=0;
 	struct sockaddr_un local, remote;
 	char str_ack[100];
 	char rcv_str[100];
@@ -65,47 +62,44 @@ int main(void)
 		}
 
 		printf("Connected.\n");
-
+    last_correct = 0;
 		done = 0;
 		pkt_no = 0;
 		do {
 			n = recv(s2, rcv_str, 100, 0);
 			
 			msg_pkt = atoi(rcv_str);
+      window_flag++;
       
       printf("msg_pkt: %d\n", msg_pkt);
+      printf("window_flag= %d\n", window_flag);
 			if(msg_pkt == pkt_no && n>=0)
 			{
-          status = random_gen();
-			    if(status == 1 || msg_pkt==0)
-          {
-            snprintf(str_ack, 100, "%d", msg_pkt);
-            if(send(s2, str_ack, n, 0)<0)
-			      {
-			          perror("send");
-			          done = 1;
-			      }
-            pkt_no++;
-            
-          }
-          else
-          {
-            msg_pkt;
-            printf("Failing msg_pkt[%d]:\n", msg_pkt);
-            snprintf(str_ack, 100, "%d", msg_pkt);
-            if(send(s2, str_ack, n, 0)<0)
-			      {
-			          perror("send");
-			          done = 1;
-            }
-          }
-			    continue;
+        if(window_flag==5) 
+        {
+          last_correct = random_gen(last_correct);
+          printf("Sending last correct as packet[%d]\n", last_correct);
+          snprintf(str_ack, 100, "%d", last_correct);
+          if(send(s2, str_ack, n, 0)<0)
+			    {
+			        perror("send");
+			        done = 0;
+			    }
+          window_flag = 0;
+          pkt_no = last_correct+1; 
+        }
+        else
+        {
+          pkt_no++;
+          //continue;
+        }
 			} 
 			if (n <= 0) {
 				if (n < 0) perror("recv");
 				done = 1;
 			}
-        memset(rcv_str, 100, 0);   
+      memset(rcv_str, 100, 0);   
+      printf("%d %d\n", done, pkt_no);
 		} while (!done && pkt_no < 100);
         
 		close(s2);

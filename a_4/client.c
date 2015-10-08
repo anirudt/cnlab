@@ -48,7 +48,6 @@ int main(void)
     printf("Connected.\n");
     size_t bk= sizeof(int);
     i = 0;
-    printf("Before loop");
     while(i<100) {
             snprintf(msg_send, 100, "%d", msg_pkt[i]);
             printf("msg_send = %s", msg_send);
@@ -64,25 +63,25 @@ int main(void)
         /* Receiving the ACK signal can be initiated 
          * only when we have completed sending our
          * entire window of packets */ 
-        if(window_complete%WINDOW_SIZE==0)
-        {
+            if(window_complete==5)
+            {
           t = recv(s, str, 100, 0);
-          received_ack = atoi(str);
-          printf("received_ack=%d\n", received_ack);
           if (t > 0) {
+              received_ack = atoi(str);
+              printf("received_ack=%d\n", received_ack);
               failures++;
               i = received_ack + 1;
               printf("echo> msg_pkt[%d] ACK received:\n", received_ack);
               window_complete = 0;
           } 
-        }
+            }
         memset(msg_send, 100, 0);
         memset(str, 100, 0);
     }
 
-    printf("RESULTS:\n");
-    printf("Success rate = %d", success);
-    printf("Failure rate = %d", failures);
+    //printf("RESULTS:\n");
+    //printf("Success rate = %d", success);
+    //printf("Failure rate = %d", failures);
     close(s);
     return 0;
 }

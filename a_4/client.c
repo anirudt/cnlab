@@ -1,5 +1,5 @@
 /*
-** echoc.c -- the echo client for echos.c; demonstrates unix sockets
+ * Go-backN client implementation"
 */
 
 #include <stdio.h>
@@ -16,7 +16,7 @@
 
 int main(void)
 {
-    int i, s, t, len;
+    int i, s, t, len, n;
     int window_complete = 0;
     struct sockaddr_un remote;
     int msg_pkt[100];
@@ -25,6 +25,8 @@ int main(void)
     char str[100];
     int failures = 0, success = 0;
     int flag = 0;
+    int msg_pkt_id, msg_pkt_ack;
+    int last_nack = 0;
     for(i = 0; i < 100; i++)
     {
         msg_pkt[i] = i;
@@ -47,7 +49,7 @@ int main(void)
 
     printf("Connected.\n");
     size_t bk= sizeof(int);
-    i = 0;
+    i = 10;
     while(i<100) {
             snprintf(msg_send, 100, "%d", msg_pkt[i]);
             printf("msg_send = %s", msg_send);
@@ -60,28 +62,39 @@ int main(void)
             printf("window_complete=%d\n", window_complete);
             i++;
             sleep(1);
-        /* Receiving the ACK signal can be initiated 
-         * only when we have completed sending our
-         * entire window of packets */ 
-            if(window_complete==5)
-            {
-          t = recv(s, str, 100, 0);
-          if (t > 0) {
+
+            t = recv(s, str, 100, 0);
+            if (t > 0) {
               received_ack = atoi(str);
+              msg_pkt_id = received_ack/10;
+              msg_pkt_ack = received_ack%10;
               printf("received_ack=%d\n", received_ack);
-              failures++;
-              i = received_ack + 1;
-              printf("echo> msg_pkt[%d] ACK received:\n", received_ack);
-              window_complete = 0;
-          } 
-            }
-        memset(msg_send, 100, 0);
-        memset(str, 100, 0);
+              if (msg_pkt_id >= last_nack + 5) {
+                msg_pkt_ack = -1;
+              }
+              else {}
+              if (msg_pkt_ack == 1) {
+                /* Ack sent by the server */
+                printf("echo> msg_pkt[%d] ACK received:\n",msg_pkt_id);
+                snprintf(msg_send, 100, "%d", msg_pkt_id+5);
+                if (send(s, msg_send, bk, 0) == -1) {
+                  perror("send");
+                  exit(1);
+                }
+              }
+              else if(msg_pkt_ack == 0) {
+                /* Nack sent by the server */
+                printf("echo> msg_pkt[%d] NACK received:\n",msg_pkt_id);
+                i = msg_pkt_id + 1;
+                window_complete = 0;
+                last_nack = msg_pkt_id;
+              }
+            } 
+            window_complete = window_complete%5;
+            memset(msg_send, 100, 0);
+            memset(str, 100, 0);
     }
 
-    //printf("RESULTS:\n");
-    //printf("Success rate = %d", success);
-    //printf("Failure rate = %d", failures);
     close(s);
     return 0;
 }

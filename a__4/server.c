@@ -1,6 +1,6 @@
 /*
  * Go-BackN server implementation
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +18,7 @@ int random_gen(int i)
 	srand(time(NULL));
   int n;
 	n = (i+random()%5);
+  printf("%d \n", n);
   return n;
 }
 
@@ -71,7 +72,7 @@ int main(void)
 		done = 0;
 		pkt_no = 10;
     int temp, j;
-    temp = random_gen(last_nack)+1;
+    temp = random_gen(last_nack);
 		do {
       count_nacks = 0;
       for (i = last_nack; i < last_nack+5; i++) {
@@ -80,7 +81,7 @@ int main(void)
         msg_pkt_id = atoi(rcv_str);
         printf("pkt = %d\n",msg_pkt_id);
         pkts[i-last_nack] = msg_pkt_id;
-        if (msg_pkt_id != temp+1) {
+        if (msg_pkt_id != temp) {
           printf("Server> Packet received for %d, sending Ack\n", msg_pkt_id);
         }
         else {
@@ -89,7 +90,7 @@ int main(void)
         }
       }
       for (i = last_nack; i < last_nack+5; i++) {
-        if (pkts[i-last_nack] == temp+1) 
+        if (pkts[i-last_nack] == temp) 
           snprintf(str_ack, 100, "%d", 0+pkts[i-last_nack]*10);
         else 
           snprintf(str_ack, 100, "%d", 1+pkts[i-last_nack]*10);
@@ -104,6 +105,8 @@ int main(void)
         msg_pkt_id = atoi(rcv_str);
         printf("Server> Packet received for %d\n", msg_pkt_id);
       }
+      last_nack = temp;
+      temp = random_gen(last_nack);
 			
       memset(rcv_str, 100, 0);   
       memset(str_ack, 100, 0);

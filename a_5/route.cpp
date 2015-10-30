@@ -5,8 +5,10 @@
 #define INT_MAX 2147483647
 using namespace std;
 
+/* Debug Function */
 void print_graph(int *ADJ, int V) {
   int i, j;
+  cout << "Printing" << endl;
   for (i = 0; i < V; i++) {
     for (j = 0; j < V; j++) {
       cout << ADJ[V*i+j] << " ";
@@ -15,9 +17,52 @@ void print_graph(int *ADJ, int V) {
   }
 }
 
+/* Helper Function for Djikstra */
+int get_small_index(int *arr, int V) {
+  int idx = 0, small = INT_MAX-1, i;
+  for (i = 0; i < V; i++) {
+    if(arr[i] < small) {
+      small = arr[i];
+      idx = i;
+    }
+  }
+  return idx;
+}
+
 /* Djikstra's Algorithm Implementation */
 int *djikstra(int *ADJ, int source, int V) {
+  int *DIST, *TENT, *FIN, i;
+  int count = 0, small_idx = 0;
+  DIST = new int[V];
+  TENT = new int[V];
+  FIN = new int[V];
+  for (i = 0; i < V; i++) {
+    DIST[i] = INT_MAX-1;
+    TENT[i] = INT_MAX-1;
+    FIN[i] = INT_MAX-1;
+  }
+  DIST[source] = 0;
+  TENT[source] = 0;
+  FIN[source] = 0;
+  while(count<V) {
+    small_idx = get_small_index(TENT, V);
+    for (i = 0; i < V; i++) {
+      /* Process only if there is a finite solution */
+      if (ADJ[V*small_idx+i]>0 && ADJ[V*small_idx+i]!=INT_MAX) {
+        if (DIST[i] > DIST[small_idx] + ADJ[V*small_idx+i]) {
+          DIST[i] = DIST[small_idx] + ADJ[V*small_idx+i];
+          TENT[i] = DIST[i];
+        }
+      }
+    }
+    /* Updating the final distance matrix */
+    FIN[small_idx] = DIST[small_idx];
 
+    /* So that this node will not be visited again */
+    TENT[small_idx] = INT_MAX;
+    count++;
+  }
+  return FIN;
 }
 
 /* Bellman Ford Algorithm Implementation
@@ -33,12 +78,19 @@ int main() {
   ADJ = new int[5*5];
   srand(time(NULL));
   /* Random graph generation */
+  for (i=0; i < V; i++) {
+    for (j=0; j < V; j++) {
+      ADJ[V*i+j] = 0;
+    }
+  }
   for (i = 0; i < V; i++) {
-    for (j = 0; j < V; j++) {
-      if (i==j) 
-        ADJ[V*i+j] = 0;
-      else
-        ADJ[V*i+j] = rand()%20;
+    for (j = i+1; j < V; j++) {
+      ADJ[V*i+j] = rand()%20 + 1;
+    }
+  }
+  for (i = 0; i<V; i++) {
+    for(j = 0; j < i; j++) {
+      ADJ[V*i+j] = ADJ[V*j+i];
     }
   }
 
@@ -48,12 +100,15 @@ int main() {
   cout << " Define the source point: " << endl;
   cin >> source;
 
+  print_graph(ADJ, V);
   switch(c) {
-    case 1: OUT = djikstra(ADJ, V, source);
+    case 1: OUT = djikstra(ADJ, source, V);
+            for (i = 0; i < V; i++) {
+              cout << OUT[i] << endl;
+            }
             break;
     case 2: /* TODO */
             break;
-    default:
   }
   return 0;
 }

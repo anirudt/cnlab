@@ -15,10 +15,11 @@
 
 int random_gen(int i)
 {
+  /* We define one packet to go wrong every iteration,
+   * to simulate loss of packets*/
 	srand(time(NULL));
   int n;
 	n = (i+random()%5);
-  printf("%d \n", n);
   return n;
 }
 
@@ -41,7 +42,7 @@ int main(void)
 		perror("socket");
 		exit(1);
 	}
-  printf("Go Back-N Protocol");
+  printf("Go Back-N Protocol \n");
 	local.sun_family = AF_UNIX;
 	strcpy(local.sun_path, SOCK_PATH);
 	unlink(local.sun_path);
@@ -76,7 +77,6 @@ int main(void)
 		do {
       count_nacks = 0;
       for (i = last_nack; i < last_nack+5; i++) {
-        printf("%d\n",i);
         n = recv(s2, rcv_str, 100, 0);
         msg_pkt_id = atoi(rcv_str);
         printf("pkt = %d\n",msg_pkt_id);
@@ -100,7 +100,7 @@ int main(void)
         }
         sleep(1);
       }
-      for (j = 0; j < WINDOW_SIZE-1; j++) {
+      for (j = 0; j < temp - last_nack; j++) {
 			  n = recv(s2, rcv_str, 100, 0);
         msg_pkt_id = atoi(rcv_str);
         printf("Server> Packet received for %d\n", msg_pkt_id);

@@ -74,7 +74,7 @@ int main(void)
         received_ack = atoi(str);
         msg_pkt_id = received_ack/10;
         msg_pkt_ack = received_ack%10;
-        if (msg_pkt_ack == 1 && msg_pkt_id < 95) {
+        if (msg_pkt_ack == 1 && msg_pkt_id < 95 && fl==0) {
           printf("client> Received Ack from %d\n",msg_pkt_id);
           pkts[acks] = msg_pkt_id;
           acks++;
@@ -88,7 +88,7 @@ int main(void)
         }
       }
     }
-    for (j = 0; j < WINDOW_SIZE-1; j++) {
+    for (j = 0; j < acks; j++) {
       snprintf(msg_send, 100, "%d", pkts[j]+5);
       printf("Sending ACKed packets %d \n", pkts[j]+5);
       if (send(s, msg_send, bk, 0)<0) {

@@ -66,9 +66,43 @@ int *djikstra(int *ADJ, int source, int V) {
 }
 
 /* Bellman Ford Algorithm Implementation
+ * From Biki's Laptop
  * To be completed */
-int bellman_ford() {
+int *bellman_ford(int *ADJ, int source, int V) {
+  int i, j, k;
+  int *TMP, *DIST, *FIN;
+  TMP = new int[V];
+  DIST = new int[V];
+  FIN = new int[V];
+  /*Step 1*/
+  for (i = 0; i < V; i++) {
+    DIST[i] = INT_MAX;
+    TMP[i] = 0;
+  }
+  DIST[source] = 0;
 
+  for (k = 0; k < V; k++) {
+    for (i = 0; i < V; i++) {
+      for (j = 0; j < V; j++) {
+        if (ADJ[V*i+j]!=0 && ADJ[V*i+j]!=INT_MAX) {
+          if (DIST[j] > DIST[i] + ADJ[V*i+j]) {
+            DIST[j] = DIST[i] + ADJ[V*i+j];
+          }
+        }
+      }
+    }
+  }
+
+  for (i = 0; i < V; i++) {
+    for (j = 0; j < V; j++) {
+      if (DIST[i] > DIST[j] + ADJ[V*i+j]) {
+        cout << "Presence of a negative cycle" << endl;
+        exit(0);
+      }
+    }
+  }
+
+  return DIST;
 }
 
 int main() {
@@ -85,7 +119,7 @@ int main() {
   }
   for (i = 0; i < V; i++) {
     for (j = i+1; j < V; j++) {
-      ADJ[V*i+j] = rand()%20 + 1;
+      ADJ[V*i+j] = rand()%20+1;
     }
   }
   for (i = 0; i<V; i++) {
@@ -108,6 +142,10 @@ int main() {
             }
             break;
     case 2: /* TODO */
+            OUT = bellman_ford(ADJ, source, V);
+            for (i = 0; i < V; i++) {
+              cout << OUT[i] << endl; 
+            }
             break;
   }
   return 0;
